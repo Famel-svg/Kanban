@@ -7,7 +7,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 PORT = 8080
-BACKUP_DIR = Path.home() / "OneDrive - NUCLEO ENGENHARIA" / "Documentos" / "Kanban Backups"
+BACKUP_DIR = Path(os.environ.get("KANBAN_BACKUP_DIR", Path.home() / "OneDrive - NUCLEO ENGENHARIA" / "Documentos" / "Kanban Backups"))
 STATUSES = {"todo", "doing", "stopped", "done"}
 PRIORITIES = {"low", "medium", "high"}
 MAX_BODY = 5 * 1024 * 1024
