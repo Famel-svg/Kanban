@@ -2,13 +2,14 @@ const DEFAULT_STATUSES=[['todo','Para fazer'],['doing','Fazendo'],['stopped','Ca
 const PRIORITIES={low:'Baixa',medium:'Média',high:'Alta'};
 const KEY='kanban-local-v1',THEME_KEY='kanban-theme',PENDING_BACKUP_KEY='kanban-backup-pending-v1';
 const STATUS_KEY='kanban-statuses-v1';
+const isGitHubPages=()=>location.hostname.endsWith('.github.io');
 let STATUSES=validateStatuses(JSON.parse(localStorage.getItem(STATUS_KEY)||'null'));
 let tasks=loadTasks();
 let draggedStatus=null,statusPreview=null,statusSlots=[];
 let draggedId=null; let deferredPrompt;
 let backupTimer;let backupQueue=Promise.resolve();
 const $=id=>document.getElementById(id);
-const save=()=>{localStorage.setItem(KEY,JSON.stringify(tasks));localStorage.setItem(STATUS_KEY,JSON.stringify(STATUSES));const backup=makeBackup();try{localStorage.setItem(PENDING_BACKUP_KEY,backup);scheduleAutoBackup(backup)}catch{setBackupStatus('Backup pendente: armazenamento local indisponível.')}};
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(tasks));localStorage.setItem(STATUS_KEY,JSON.stringify(STATUSES));const backup=makeBackup();try{if(isGitHubPages()){localStorage.removeItem(PENDING_BACKUP_KEY);setBackupStatus('Demonstração online: os dados ficam neste navegador. Exporte um backup JSON para guardá-los.');return}localStorage.setItem(PENDING_BACKUP_KEY,backup);scheduleAutoBackup(backup)}catch{setBackupStatus('Backup pendente: armazenamento local indisponível.')}};
 const icon={edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>',trash:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg>',grip:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>'};
 
 function loadTasks(){
@@ -75,6 +76,7 @@ async function restoreAutoBackup(){
   if(queued)scheduleAutoBackup(queued);
 }
 function initializeAutoBackup(){
+  if(isGitHubPages()){setBackupStatus('Demonstração online: os dados ficam neste navegador. Exporte um backup JSON para guardá-los.');return}
   if(localStorage.getItem(KEY)===null){restoreAutoBackup();return}
   const queued=localStorage.getItem(PENDING_BACKUP_KEY);
   if(queued){scheduleAutoBackup(queued);return}
