@@ -4,7 +4,8 @@ const vm=require('node:vm');
 const elements=new Map();
 const element=id=>{if(!elements.has(id))elements.set(id,{value:'',innerHTML:'',dataset:{},style:{setProperty(){}},classList:{add(){},remove(){}},addEventListener(){},setAttribute(){},focus(){},showModal(){},close(){},querySelector(){return null}});return elements.get(id)};
 const storage=new Map([['kanban-local-v1','[]']]);
-const context=vm.createContext({console,crypto:require('node:crypto').webcrypto,localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},document:{getElementById:element,documentElement:{dataset:{theme:'dark'}},querySelector:()=>({}),querySelectorAll:()=>[],addEventListener(){}},window:{addEventListener(){}},navigator:{},matchMedia:()=>({matches:true}),setTimeout:()=>0,clearTimeout(){},alert:message=>{throw Error(message)}});
+const metrics={timerCalls:0,backupRequests:0};
+const context=vm.createContext({console,crypto:require('node:crypto').webcrypto,metrics,location:{hostname:'localhost'},localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},document:{getElementById:element,documentElement:{dataset:{theme:'dark'}},querySelector:()=>({}),querySelectorAll:()=>[],addEventListener(){}},window:{addEventListener(){}},navigator:{},matchMedia:()=>({matches:true}),setTimeout:()=>{metrics.timerCalls++;return 0},clearTimeout(){},fetch:async()=>{metrics.backupRequests++;throw Error('unexpected backup request')},alert:message=>{throw Error(message)}});
 vm.runInContext(fs.readFileSync('assets/js/app.js','utf8'),context);
 vm.runInContext(`
 const fixture={id:'a',title:'Teste',description:'Descrição',status:'done',priority:'low',createdAt:new Date(2026,9,20,12).getTime()};
@@ -53,6 +54,7 @@ draggedStatus=null;statusPreview=null;
 const old={format:'kanban-local-backup',version:1,tasks:[{...fixture,status:'todo'}]};
 if(validateBackup(old).length!==1)throw Error('Backup antigo incompatível');
 let rejected=false;try{validateStatuses([['todo','A'],['doing','B'],['done','C'],['done','D']])}catch{rejected=true}if(!rejected)throw Error('Status duplicado aceito');
+location.hostname='rafael.github.io';const timersBeforePages=metrics.timerCalls;save();if(metrics.timerCalls!==timersBeforePages||localStorage.getItem(PENDING_BACKUP_KEY)!==null)throw Error('Pages enfileirou backup do servidor');initializeAutoBackup();if(!$('backupStatus').textContent.includes('Exporte um backup JSON'))throw Error('Aviso de dados no Pages ausente');if(metrics.backupRequests)throw Error('Pages tentou acessar backup do servidor');
 `,context);
 vm.runInContext(`
 const dragHandlers={},dragClasses=new Set(),pendingFrames=[];
@@ -67,4 +69,4 @@ pendingFrames.shift()();
 if(!dragClasses.has('status-placeholder'))throw Error('Prévia não apareceu no próximo frame');
 `,context);
 assert.ok(storage.get('kanban-statuses-v1'));
-console.log('OK: cartões, filtro mensal, criação/reordenação, persistência e backups antigos/novos.');
+console.log('OK: cartões, filtro mensal, status, backups compatíveis e modo estático do GitHub Pages.');
