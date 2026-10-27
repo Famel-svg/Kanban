@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fa">
+  <meta name="description" content="Kanban local simples para organizar tarefas.">
+  <script>document.documentElement.dataset.theme=localStorage.getItem('kanban-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');</script>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <title>Kanban Local</title>
+</head>
+<body>
+  <a class="skip-link" href="#board">Pular para o quadro</a>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18" rx="2"/><rect x="14" y="3" width="7" height="12" rx="2"/></svg></span><div><h1>Kanban Local</h1><p>Seu espaço de trabalho privado</p></div></div>
+      <div class="actions">
+        <button class="icon-button theme-toggle" id="themeButton" type="button" aria-label="Ativar tema escuro" aria-pressed="false"><svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg><svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg></button>
+        <details class="settings"><summary class="icon-button" aria-label="Configurações" title="Configurações"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3-.5 2-2 .9-1.9-.6-2 3.4 1.4 1.5v2.4l-1.4 1.5 2 3.4 1.9-.6 2 .9.5 2h4l.5-2 2-.9 1.9.6 2-3.4-1.4-1.5v-2.4l1.4-1.5-2-3.4-1.9.6-2-.9-.5-2Z"/><circle cx="11" cy="11.4" r="3"/></svg></summary><div class="settings-panel"><span class="settings-label">Backup do quadro</span><button class="button secondary" id="exportTasksButton" type="button">Exportar backup</button><button class="button secondary" id="importTasksButton" type="button">Importar backup</button><input id="importTasksInput" type="file" accept="application/json,.json" hidden></div></details>
+        <button class="button secondary install-button" id="installButton" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Instalar</button>
+      </div>
+    </header>
+    <section class="workspace-summary" aria-label="Resumo do quadro"><div class="summary" id="summary" aria-live="polite"></div><button class="button primary" id="newTaskButton"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nova tarefa</button><div class="status-create"><button class="button secondary new-status-button" id="newStatusButton" type="button" aria-expanded="false" aria-controls="statusForm"><span aria-hidden="true">+</span> Novo status</button><form id="statusForm" hidden><label for="statusName">Nome do status</label><input id="statusName" required maxlength="40" placeholder="Ex.: Em revisão" autocomplete="off" aria-describedby="statusError"><p id="statusError" class="status-error" role="status"></p><div class="status-create-actions"><button class="button secondary" id="cancelStatusButton" type="button">Cancelar</button><button class="button primary" type="submit">Confirmar</button></div></form></div></section>
+    <section class="toolbar" aria-label="Filtros e busca"><label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="searchInput" type="search" placeholder="Buscar tarefa..." aria-label="Buscar tarefa"></label><label class="select-label"><span>Mês de criação</span><select id="monthFilter" aria-label="Filtrar por mês de criação"><option value="">Todos os meses</option></select></label><label class="select-label"><span>Ordenar por</span><select id="sortSelect" aria-label="Ordenar tarefas"><option value="newest">Mais recentes</option><option value="oldest">Mais antigas</option><option value="priority">Prioridade</option></select></label></section>
+    <section class="backup-bar" aria-label="Backup de tarefas"><span id="backupStatus" role="status" aria-live="polite">Backup automático para OneDrive.</span></section>
+    <div class="status-toolbar"><p>Arraste os status para organizar · Clique no nome para editar</p></div>
+    <section class="board" id="board" aria-label="Quadro Kanban"></section>
+    <p class="hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg>Arraste os cartões ou use o seletor “Mover para”.</p>
+  </main>
+  <dialog id="taskDialog" aria-labelledby="dialogTitle"><form id="taskForm"><div class="dialog-head"><div><p class="eyebrow">DETALHES DA TAREFA</p><h2 id="dialogTitle">Nova tarefa</h2></div><button class="icon-button" id="closeDialogButton" type="button" aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><input type="hidden" id="taskId"><label>Título<input id="taskTitle" required maxlength="100" placeholder="Ex.: Revisar cronograma"></label><label>Descrição <span class="optional">opcional</span><textarea id="taskDescription" rows="4" maxlength="280" placeholder="O que precisa ser feito?"></textarea></label><div class="form-grid"><label>Status<select id="taskStatus"></select></label><label>Prioridade<select id="taskPriority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label></div><div class="dialog-actions"><button class="button secondary" id="cancelDialogButton" type="button">Cancelar</button><button class="button primary" id="saveTaskButton" type="submit">Salvar tarefa</button></div></form></dialog>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
